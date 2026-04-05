@@ -5,76 +5,13 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Models\Order;
 use App\Models\OrderItem;
+use App\Models\Payment;
 use App\Models\Product;
 use App\Models\Table;
+use App\Models\Transaction;
 
 class OrderController extends Controller
 {
-    public function index()
-    {
-        // $orders = Order::with('table')->orderBy('created_at', 'desc')->get();
-        $orders = Order::with('orderItems.product')->get();
-        $orders = Order::with(['table', 'orderItems.product'])->latest()->paginate(10);
-        return view('orders.index', compact('orders'));
-    }
-
-    public function store(Request $request)   //untuk admin
-    {
-        $request->validate([
-            'table_id' => 'required|exists:tables,id',
-            'items' => 'required|array',
-            'items.*.menu_id' => 'required|exists:products,id',
-            'items.*.quantity' => 'required|integer|min:1',
-        ]);
-
-        $items = array_filter($request->items, function ($qty) {
-            return $qty > 0;
-        });
-    
-        if (count($items) === 0) {
-            return back()->with('error', 'Minimal pilih 1 produk.');
-        }
-    
-        // Buat pesanan baru
-        $order = new Order();
-        $order->table_id = $request->table_id;
-        $order->status = 'pending'; // default
-        $order->total_price = 0;
-        $order->save();
-    
-        $total = 0;
-    
-        foreach ($request->items as $item) {
-            $product = \App\Models\Product::find($item['menu_id']);
-            $subtotal = $product->price * $item['quantity'];
-    
-            OrderItem::create([
-                'order_id' => $order->id,
-                'product_id' => $product->id,
-                'quantity' => $item['quantity'],
-                'price' => $product->price,
-                'subtotal' => $subtotal,
-            ]);
-
-               $total += $subtotal;
-        }
-    
-        $order->total_price = $total;
-        $order->save();
-    
-        return response()->json([
-            'order_id' => $order->id,
-            'total_price' => $total,
-        ]);
-    
-    
-        $order->total_price = $totalPrice;
-        $order->save();
-    
-        return redirect()->route('payment.page', $order->id)->with('success', 'Pesanan berhasil dibuat!');
-    }
-    
-    
     public function storeOrder(Request $request)
     {
         $request->validate([
@@ -88,6 +25,7 @@ class OrderController extends Controller
             // Buat order baru
             $order = new Order();
             $order->table_id = $request->table_id;
+            $order->is_takeaway = $request->boolean('is_takeaway');
             $order->status = 'pending';
             $order->total_price = 0; // Default dulu
             $order->save();
@@ -113,18 +51,23 @@ class OrderController extends Controller
             // Simpan total harga ke order
             $order->total_price = $total;
             $order->save();
+
+            // Mark table as occupied
+            Table::where('id', $order->table_id)->update(['status' => 'occupied']);
     
             return response()->json([
                 'message' => 'Berhasil dipesan!',
                 'order_id' => $order->id,
                 'total_price' => $total,
+                'tracking_url' => route('order.track', $order->id),
             ]);
     
         } catch (\Exception $e) {
     
+            \Illuminate\Support\Facades\Log::error('Order creation failed', ['exception' => $e]);
+
             return response()->json([
                 'message' => 'Terjadi kesalahan saat memesan.',
-                'error' => $e->getMessage(), // bisa dihilangkan di production
             ], 500);
         }
     }
@@ -133,72 +76,82 @@ class OrderController extends Controller
     public function updateStatus(Request $request, Order $order)
     {
         $request->validate([
-            'status' => 'required|in:pending,completed,cancelled',
+            'status' => 'required|in:pending,cooking,ready,completed,cancelled',
         ]);
+
+        // Cegah menyelesaikan pesanan yang belum dibayar
+        if ($request->status === 'completed') {
+            $payment = Payment::where('order_id', $order->id)->first();
+            if ($payment && $payment->status !== 'success') {
+                return redirect()->back()->with('error', 'Pesanan belum dibayar! Selesaikan pembayaran terlebih dahulu.');
+            }
+        }
     
         $order->update(['status' => $request->status]);
+
+        // Free table when order completed or cancelled
+        if (in_array($request->status, ['completed', 'cancelled'])) {
+            Table::where('id', $order->table_id)->update(['status' => 'available']);
+        }
+
+        // Finalize payment & create transaction when completed
+        if ($request->status === 'completed') {
+            $payment = Payment::where('order_id', $order->id)->first();
+            if ($payment) {
+                $payment->update(['status' => 'success']);
+            }
+
+            if (!Transaction::where('order_id', $order->id)->exists()) {
+                $paymentMethod = optional(Payment::where('order_id', $order->id)->first())->payment_method;
+                Transaction::create([
+                    'order_id' => $order->id,
+                    'table_id' => $order->table_id,
+                    'total_price' => $order->total_price,
+                    'payment_status' => 'paid',
+                    'payment_method' => $paymentMethod,
+                ]);
+            }
+        }
     
-        return redirect()->route('orders.index')->with('success', 'Status pesanan berhasil diperbarui.');
+        return redirect()->back()->with('success', 'Status pesanan berhasil diperbarui.');
+    }
+
+    public function receipt(Order $order)
+    {
+        $order->load(['orderItems.product', 'table']);
+        $payment = Payment::where('order_id', $order->id)->first();
+        $cashReceived = $payment->cash_received ?? null;
+        return view('orders.receipt', compact('order', 'payment', 'cashReceived'));
+    }
+
+    /**
+     * Public: customer order tracking page
+     */
+    public function trackOrder($orderId)
+    {
+        $order = Order::with(['orderItems.product', 'table'])->findOrFail($orderId);
+        return view('orders.tracking', compact('order'));
+    }
+
+    /**
+     * API: return order status for polling
+     */
+    public function orderStatus($orderId)
+    {
+        $order = Order::findOrFail($orderId);
+        return response()->json([
+            'status' => $order->status,
+            'updated_at' => $order->updated_at->toIso8601String(),
+        ]);
     }
 
     public function orderPage($tableId)
     {
-        $table = \App\Models\Table::findOrFail($tableId);
-        $products = Product::all(); // tampilkan semua produk
+        $table = Table::findOrFail($tableId);
+        $products = Product::orderByDesc('available')->orderBy('name')->get();
     
         return view('orders.order', compact('table', 'products'));
     }
 
-    public function create()
-    {
-        $tables = \App\Models\Table::all();
-        $products = \App\Models\Product::all();
-    
-        return view('orders.create', compact('tables', 'products'));
-    }
-
-    public function createByKasir()
-    {
-        $tables = Table::all();
-        $products = Product::all();
-        return view('orders.kasir_create', compact('tables', 'products'));
-    }
-    
-    public function storeByKasir(Request $request)
-    {
-        $request->validate([
-            'table_id' => 'required|exists:tables,id',
-            'items' => 'required|array',
-        ]);
-    
-        $order = new Order();
-        $order->table_id = $request->table_id;
-        $order->status = 'pending';
-        $order->total_price = 0;
-        $order->save();
-    
-        $total = 0;
-        foreach ($request->items as $productId => $quantity) {
-            if ($quantity > 0) {
-                $product = Product::findOrFail($productId);
-                $subtotal = $product->price * $quantity;
-    
-                OrderItem::create([
-                    'order_id' => $order->id,
-                    'product_id' => $productId,
-                    'quantity' => $quantity,
-                    'price' => $product->price,
-                    'subtotal' => $subtotal,
-                ]);
-    
-                $total += $subtotal;
-            }
-        }
-    
-        $order->total_price = $total;
-        $order->save();
-    
-        return redirect()->route('orders.index')->with('success', 'Pesanan berhasil dibuat.');
-    }
-    
 }
+

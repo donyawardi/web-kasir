@@ -9,12 +9,16 @@ class Order extends Model
 {
     use HasFactory;
 
+    // Order attributes
     protected $fillable = [
-        'order_id',
-        'product_id',
-        'quantity',
-        'price',
-        'subtotal',
+        'table_id',
+        'is_takeaway',
+        'status',
+        'total_price',
+    ];
+
+    protected $casts = [
+        'total_price' => 'decimal:2',
     ];
 
     public function orderItems()
@@ -25,6 +29,11 @@ class Order extends Model
     public function table()
     {
         return $this->belongsTo(Table::class);
+    }
+
+    public function payment()
+    {
+        return $this->hasOne(Payment::class);
     }
 
 }

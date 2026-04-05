@@ -8,9 +8,22 @@ use Illuminate\Http\Request;
 
 class TransactionController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        $transactions = Transaction::with('table')->latest()->get();
+        $status = $request->query('status');
+        $dateFrom = $request->query('date_from');
+        $dateTo = $request->query('date_to');
+
+        $transactions = Transaction::with('table')
+            ->when($status === 'paid' || $status === 'pending', function ($q) use ($status) {
+                $q->where('payment_status', $status);
+            })
+            ->when(filled($dateFrom), fn($q) => $q->whereDate('created_at', '>=', $dateFrom))
+            ->when(filled($dateTo), fn($q) => $q->whereDate('created_at', '<=', $dateTo))
+            ->latest()
+            ->paginate(10)
+            ->withQueryString();
+
         return view('transactions.index', compact('transactions'));
     }
 
@@ -38,6 +51,7 @@ class TransactionController extends Controller
 
     public function show(Transaction $transaction)
     {
+        $transaction->load('table');
         return view('transactions.show', compact('transaction'));
     }
 
@@ -55,7 +69,7 @@ class TransactionController extends Controller
             'payment_status' => 'required|in:pending,paid',
         ]);
 
-        $transaction->update($request->all());
+        $transaction->update($request->only(['table_id', 'total_price', 'payment_status']));
 
         return redirect()->route('transactions.index')->with('success', 'Transaksi berhasil diperbarui.');
     }

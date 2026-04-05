@@ -35,7 +35,9 @@ class DatabaseSeeder extends Seeder
         // Jalankan seeder lainnya (kalau perlu)
         $this->call([
             RoleAndPermissionSeeder::class,
+            AdminSeeder::class,
             KasirSeeder::class,
+            ProductsSeeder::class,
             SampleProductsAndTablesSeeder::class,
             // tambahkan seeder lain kalau ada
         ]);

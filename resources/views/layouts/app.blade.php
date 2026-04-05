@@ -34,6 +34,31 @@
 
             <!-- Page Content -->
             <main>
+                {{-- Flash messages --}}
+                @if (session('success'))
+                    <div class="max-w-7xl mx-auto py-4 px-4 sm:px-6 lg:px-8" data-flash>
+                        <div class="bg-green-50 border-l-4 border-green-400 p-4 flex items-start justify-between rounded">
+                            <div class="flex items-start gap-3">
+                                <svg class="w-6 h-6 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                                <p class="text-green-700 font-medium">{{ session('success') }}</p>
+                            </div>
+                            <button onclick="this.closest('[data-flash]').remove()" class="text-green-700">&times;</button>
+                        </div>
+                    </div>
+                @endif
+
+                @if (session('error'))
+                    <div class="max-w-7xl mx-auto py-4 px-4 sm:px-6 lg:px-8" data-flash>
+                        <div class="bg-red-50 border-l-4 border-red-400 p-4 flex items-start justify-between rounded">
+                            <div class="flex items-start gap-3">
+                                <svg class="w-6 h-6 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                                <p class="text-red-700 font-medium">{{ session('error') }}</p>
+                            </div>
+                            <button onclick="this.closest('[data-flash]').remove()" class="text-red-700">&times;</button>
+                        </div>
+                    </div>
+                @endif
+
                 @isset($slot)
                     {{ $slot }}
                 @endisset
@@ -43,6 +68,15 @@
         </div>
 
         @stack('modals')
+
+        <script>
+            // auto-dismiss flash messages after 4s
+            document.addEventListener('DOMContentLoaded', function () {
+                setTimeout(function () {
+                    document.querySelectorAll('[data-flash]').forEach(function (el) { el.remove(); });
+                }, 4000);
+            });
+        </script>
 
         @livewireScripts
     </body>
