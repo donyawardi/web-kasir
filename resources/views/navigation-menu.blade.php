@@ -1,11 +1,6 @@
 <nav x-data="{ open: false }" class="bg-white border-b border-gray-100">
     @php
-        $user = Auth::user();
-        $isAdmin = method_exists($user, 'hasRole') && $user->hasRole('admin');
-        $isKasir = method_exists($user, 'hasRole') && $user->hasRole('kasir');
-        $homeRoute = $isAdmin
-            ? route('admin.dashboard')
-            : ($isKasir ? route('kasir.dashboard') : route('orders.index'));
+        $isAdmin = auth()->user()?->hasRole('admin');
     @endphp
 
     <!-- Primary Navigation Menu -->
@@ -14,66 +9,43 @@
             <div class="flex">
                 <!-- Logo -->
                 <div class="shrink-0 flex items-center">
-                    <a href="{{ $homeRoute }}">
+                    <a href="{{ route('dashboard') }}">
                         <x-application-mark class="block h-9 w-auto" />
                     </a>
                 </div>
 
                 <!-- Navigation Links -->
                 <div class="hidden space-x-8 sm:-my-px sm:ms-10 sm:flex">
-                    <x-nav-link href="{{ $homeRoute }}" :active="request()->routeIs('admin.dashboard') || request()->routeIs('kasir.dashboard') || request()->routeIs('orders.index')">
+                    <x-nav-link href="{{ route('dashboard') }}" :active="request()->routeIs('dashboard')">
                         {{ __('Dashboard') }}
                     </x-nav-link>
 
+                    <x-nav-link href="{{ route('products.index') }}" :active="request()->routeIs('products.*')">
+                        {{ __('Produk') }}
+                    </x-nav-link>
+
+                    <x-nav-link href="{{ route('tables.index') }}" :active="request()->routeIs('tables.*')">
+                        {{ __('Meja') }}
+                    </x-nav-link>
+
+                    <x-nav-link href="{{ route('orders.index') }}" :active="request()->routeIs('orders.*')">
+                        {{ __('Pesanan') }}
+                    </x-nav-link>
+
+                    <x-nav-link href="{{ route('transactions.index') }}" :active="request()->routeIs('transactions.*')">
+                        {{ __('Transaksi') }}
+                    </x-nav-link>
+
                     @if ($isAdmin)
-                        <x-nav-link href="{{ route('admin.products.index') }}" :active="request()->routeIs('admin.products.*')">
-                            {{ __('Produk') }}
-                        </x-nav-link>
-
-                        <x-nav-link href="{{ route('admin.tables.index') }}" :active="request()->routeIs('admin.tables.*')">
-                            {{ __('Meja') }}
-                        </x-nav-link>
-
-                        <x-nav-link href="{{ route('admin.users.index') }}" :active="request()->routeIs('admin.users.*')">
+                        <x-nav-link href="{{ route('users.index') }}" :active="request()->routeIs('users.*')">
                             {{ __('User') }}
                         </x-nav-link>
 
-                        <x-nav-link href="{{ route('admin.roles.index') }}" :active="request()->routeIs('admin.roles.*')">
+                        <x-nav-link href="{{ route('roles.index') }}" :active="request()->routeIs('roles.*')">
                             {{ __('Role') }}
                         </x-nav-link>
-                    @endif
 
-                    @if ($isAdmin)
-                        <x-nav-link href="{{ route('transactions.index') }}" :active="request()->routeIs('transactions.*')">
-                            {{ __('Transaksi') }}
-                        </x-nav-link>
-
-                        <x-nav-link href="{{ route('admin.orders.index') }}" :active="request()->routeIs('admin.orders.*')">
-                            {{ __('Pesanan') }}
-                        </x-nav-link>
-                        <x-nav-link href="{{ route('admin.reports.index') }}" :active="request()->routeIs('admin.reports.*')">
-                            {{ __('Laporan') }}
-                        </x-nav-link>
-                    @endif
-
-                    @if ($isKasir)
-                        <x-nav-link href="{{ route('kasir.products.index') }}" :active="request()->routeIs('kasir.products.*')">
-                            {{ __('Produk') }}
-                        </x-nav-link>
-
-                        <x-nav-link href="{{ route('kasir.orders.create') }}" :active="request()->routeIs('kasir.orders.create')">
-                            {{ __('Pesanan Baru') }}
-                        </x-nav-link>
-                    @endif
-
-                    @if ($isKasir)
-                        <x-nav-link href="{{ route('kasir.orders.index') }}" :active="request()->routeIs('kasir.orders.index') || request()->routeIs('kasir.orders.show')">
-                            {{ __('Daftar Pesanan') }}
-                        </x-nav-link>
-                    @endif
-
-                    @if ($isKasir)
-                        <x-nav-link href="{{ route('kasir.reports.index') }}" :active="request()->routeIs('kasir.reports.index')">
+                        <x-nav-link href="{{ route('reports.index') }}" :active="request()->routeIs('reports.*')">
                             {{ __('Laporan') }}
                         </x-nav-link>
                     @endif
@@ -201,55 +173,36 @@
     <!-- Responsive Navigation Menu -->
     <div :class="{'block': open, 'hidden': ! open}" class="hidden sm:hidden">
         <div class="pt-2 pb-3 space-y-1">
-            <x-responsive-nav-link href="{{ $homeRoute }}" :active="request()->routeIs('admin.dashboard') || request()->routeIs('kasir.dashboard') || request()->routeIs('orders.index')">
+            <x-responsive-nav-link href="{{ route('dashboard') }}" :active="request()->routeIs('dashboard')">
                 {{ __('Dashboard') }}
             </x-responsive-nav-link>
 
+            <x-responsive-nav-link href="{{ route('products.index') }}" :active="request()->routeIs('products.*')">
+                {{ __('Produk') }}
+            </x-responsive-nav-link>
+
+            <x-responsive-nav-link href="{{ route('tables.index') }}" :active="request()->routeIs('tables.*')">
+                {{ __('Meja') }}
+            </x-responsive-nav-link>
+
+            <x-responsive-nav-link href="{{ route('orders.index') }}" :active="request()->routeIs('orders.*')">
+                {{ __('Pesanan') }}
+            </x-responsive-nav-link>
+
+            <x-responsive-nav-link href="{{ route('transactions.index') }}" :active="request()->routeIs('transactions.*')">
+                {{ __('Transaksi') }}
+            </x-responsive-nav-link>
+
             @if ($isAdmin)
-                <x-responsive-nav-link href="{{ route('admin.products.index') }}" :active="request()->routeIs('admin.products.*')">
-                    {{ __('Produk') }}
-                </x-responsive-nav-link>
-
-                <x-responsive-nav-link href="{{ route('admin.tables.index') }}" :active="request()->routeIs('admin.tables.*')">
-                    {{ __('Meja') }}
-                </x-responsive-nav-link>
-
-                <x-responsive-nav-link href="{{ route('admin.users.index') }}" :active="request()->routeIs('admin.users.*')">
+                <x-responsive-nav-link href="{{ route('users.index') }}" :active="request()->routeIs('users.*')">
                     {{ __('User') }}
                 </x-responsive-nav-link>
 
-                <x-responsive-nav-link href="{{ route('admin.roles.index') }}" :active="request()->routeIs('admin.roles.*')">
+                <x-responsive-nav-link href="{{ route('roles.index') }}" :active="request()->routeIs('roles.*')">
                     {{ __('Role') }}
                 </x-responsive-nav-link>
-            @endif
 
-            @if ($isAdmin)
-                <x-responsive-nav-link href="{{ route('transactions.index') }}" :active="request()->routeIs('transactions.*')">
-                    {{ __('Transaksi') }}
-                </x-responsive-nav-link>
-
-                <x-responsive-nav-link href="{{ route('admin.orders.index') }}" :active="request()->routeIs('admin.orders.*')">
-                    {{ __('Pesanan') }}
-                </x-responsive-nav-link>
-                <x-responsive-nav-link href="{{ route('admin.reports.index') }}" :active="request()->routeIs('admin.reports.*')">
-                    {{ __('Laporan') }}
-                </x-responsive-nav-link>
-            @endif
-
-            @if ($isKasir)
-                <x-responsive-nav-link href="{{ route('kasir.products.index') }}" :active="request()->routeIs('kasir.products.*')">
-                    {{ __('Produk') }}
-                </x-responsive-nav-link>
-
-                <x-responsive-nav-link href="{{ route('kasir.orders.create') }}" :active="request()->routeIs('kasir.orders.create')">
-                    {{ __('Pesanan Baru') }}
-                </x-responsive-nav-link>
-
-                <x-responsive-nav-link href="{{ route('kasir.orders.index') }}" :active="request()->routeIs('kasir.orders.index') || request()->routeIs('kasir.orders.show')">
-                    {{ __('Daftar Pesanan') }}
-                </x-responsive-nav-link>
-
-                <x-responsive-nav-link href="{{ route('kasir.reports.index') }}" :active="request()->routeIs('kasir.reports.index')">
+                <x-responsive-nav-link href="{{ route('reports.index') }}" :active="request()->routeIs('reports.*')">
                     {{ __('Laporan') }}
                 </x-responsive-nav-link>
             @endif

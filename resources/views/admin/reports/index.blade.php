@@ -7,7 +7,7 @@
 
         {{-- Filter --}}
         <div class="bg-white rounded-lg shadow p-5">
-            <form method="GET" action="{{ route('admin.reports.index') }}" class="flex flex-wrap items-end gap-3">
+            <form method="GET" action="{{ route('reports.index') }}" class="flex flex-wrap items-end gap-3">
                 <div>
                     <label class="block text-xs font-medium text-gray-500 mb-1">Periode</label>
                     <select name="range" class="rounded-md border-gray-300 text-sm shadow-sm" onchange="toggleCustomDate(this)">
@@ -31,7 +31,7 @@
                 <button type="submit" class="inline-flex items-center px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium rounded shadow">Lihat Laporan</button>
             </form>
             <div class="mt-3 pt-3 border-t border-gray-100">
-                <a href="{{ route('admin.reports.export', array_filter(['range' => $range, 'date_from' => $dateFrom, 'date_to' => $dateTo])) }}"
+                <a href="{{ route('reports.export', array_filter(['range' => $range, 'date_from' => $dateFrom, 'date_to' => $dateTo])) }}"
                    class="inline-flex items-center gap-1.5 px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-medium rounded shadow">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
                     Export CSV

@@ -59,14 +59,18 @@ class KasirOrderController extends Controller
             ->paginate(10)
             ->withQueryString();
 
-        return view('orders.kasir_index', compact('orders'));
+        return view('orders.index', compact('orders'));
     }
 
     // Menampilkan detail pesanan kasir
     public function show(Order $order)
     {
         $order->load(['orderItems.product', 'table', 'payment']);
-        return view('orders.kasir_show', compact('order'));
+        if (!$order->payment) {
+            Payment::create(['order_id' => $order->id, 'status' => 'pending', 'payment_method' => 'later']);
+            $order->load('payment');
+        }
+        return view('orders.show', compact('order'));
     }
 
     // Membuat pesanan baru
@@ -75,7 +79,7 @@ class KasirOrderController extends Controller
         $products = Product::orderByDesc('available')->orderBy('name')->get();
         $tables = Table::orderBy('table_number')->get();
 
-        return view('orders.kasir_create', compact('products', 'tables'));
+        return view('orders.create', compact('products', 'tables'));
     }
 
     // Menyimpan pesanan baru

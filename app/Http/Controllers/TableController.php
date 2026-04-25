@@ -60,7 +60,7 @@ class TableController extends Controller
             $table->qr_code = 'data:image/svg+xml;base64,' . $qrCodeBase64;
             $table->save();
     
-            return redirect()->route('admin.tables.index')->with('success', 'Meja berhasil ditambahkan!');
+            return redirect()->route('tables.index')->with('success', 'Meja berhasil ditambahkan!');
         } catch (\Exception $e) {
             Log::error('Error saat menyimpan meja: ' . $e->getMessage());
             return redirect()->back()->with('error', 'Terjadi kesalahan saat menyimpan meja.');
@@ -84,13 +84,13 @@ class TableController extends Controller
             'status' => $request->status
         ]);
 
-        return redirect()->route('admin.tables.index')->with('success', 'Meja berhasil diperbarui.');
+        return redirect()->route('tables.index')->with('success', 'Meja berhasil diperbarui.');
     }
 
     public function destroy(Table $table)
     {
         $table->delete();
-        return redirect()->route('admin.tables.index')->with('success', 'Meja berhasil dihapus.');
+        return redirect()->route('tables.index')->with('success', 'Meja berhasil dihapus.');
     }
 
     public function showQrCode(Table $table)
@@ -118,7 +118,7 @@ class TableController extends Controller
                 ]);
             }
 
-            return redirect()->route('admin.tables.index')->with('success', $message);
+            return redirect()->route('tables.index')->with('success', $message);
         } catch (\Exception $e) {
             Log::error('Error regenerate QR: ' . $e->getMessage());
             $err = 'Gagal meregenerate QR: ' . $e->getMessage();
@@ -164,6 +164,6 @@ class TableController extends Controller
             }
         }
 
-        return redirect()->route('admin.tables.index')->with('success', 'Regenerate QR selesai untuk semua meja.');
+        return redirect()->route('tables.index')->with('success', 'Regenerate QR selesai untuk semua meja.');
     }
 }

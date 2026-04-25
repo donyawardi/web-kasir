@@ -63,14 +63,14 @@ class OrderController extends Controller
             'cancelled' => Order::where('status', 'cancelled')->count(),
         ];
 
-        return view('admin.orders.index', compact('orders', 'stats'));
+        return view('orders.index', compact('orders', 'stats'));
     }
 
     public function create()
     {
         $products = Product::where('available', true)->orderBy('name')->get();
         $tables = Table::orderBy('table_number')->get();
-        return view('admin.orders.create', compact('products', 'tables'));
+        return view('orders.create', compact('products', 'tables'));
     }
 
     public function store(Request $request)
@@ -129,7 +129,11 @@ class OrderController extends Controller
     public function show(Order $order)
     {
         $order->load(['orderItems.product', 'table', 'payment']);
-        return view('admin.orders.show', compact('order'));
+        if (!$order->payment) {
+            Payment::create(['order_id' => $order->id, 'status' => 'pending', 'payment_method' => 'later']);
+            $order->load('payment');
+        }
+        return view('orders.show', compact('order'));
     }
 
     public function updateStatus(Request $request, Order $order)

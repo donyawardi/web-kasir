@@ -4,7 +4,7 @@
             <h2 class="font-semibold text-xl text-gray-800 leading-tight">
                 Detail Pembayaran - Pesanan #{{ $order->id }}
             </h2>
-            <a href="{{ route('kasir.orders.index') }}" class="text-sm text-gray-500 hover:underline">
+            <a href="{{ route('orders.index') }}" class="text-sm text-gray-500 hover:underline">
                 &larr; Kembali ke Daftar Pesanan
             </a>
         </div>

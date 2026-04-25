@@ -48,10 +48,10 @@ class FortifyServiceProvider extends ServiceProvider
 
                     if ($user && method_exists($user, 'hasRole')) {
                         if ($user->hasRole('admin')) {
-                            return redirect()->route('admin.dashboard');
+                            return redirect()->route('dashboard');
                         }
                         if ($user->hasRole('kasir')) {
-                            return redirect()->route('kasir.orders.index');
+                            return redirect()->route('dashboard');
                         }
                     }
 

@@ -14,17 +14,16 @@ class TransactionController extends Controller
         $dateFrom = $request->query('date_from');
         $dateTo = $request->query('date_to');
 
-        $transactions = Transaction::with('table')
-            ->when($status === 'paid' || $status === 'pending', function ($q) use ($status) {
-                $q->where('payment_status', $status);
-            })
+        $query = Transaction::with('table')
+            ->when($status === 'paid' || $status === 'pending', fn($q) => $q->where('payment_status', $status))
             ->when(filled($dateFrom), fn($q) => $q->whereDate('created_at', '>=', $dateFrom))
-            ->when(filled($dateTo), fn($q) => $q->whereDate('created_at', '<=', $dateTo))
-            ->latest()
-            ->paginate(10)
-            ->withQueryString();
+            ->when(filled($dateTo), fn($q) => $q->whereDate('created_at', '<=', $dateTo));
 
-        return view('transactions.index', compact('transactions'));
+        $totalPendapatan = (clone $query)->where('payment_status', 'paid')->sum('total_price');
+
+        $transactions = $query->latest()->paginate(10)->withQueryString();
+
+        return view('transactions.index', compact('transactions', 'totalPendapatan'));
     }
 
     public function create()
@@ -51,7 +50,7 @@ class TransactionController extends Controller
 
     public function show(Transaction $transaction)
     {
-        $transaction->load('table');
+        $transaction->load(['table', 'order.orderItems.product']);
         return view('transactions.show', compact('transaction'));
     }
 

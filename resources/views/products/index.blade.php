@@ -7,12 +7,18 @@
 
     {{-- Search & Filter Bar --}}
     <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
-        <form id="product-filter-form" method="GET" action="{{ route($routePrefix . '.products.index') }}" class="flex flex-wrap items-center gap-3">
+        <form id="product-filter-form" method="GET" action="{{ route('products.index') }}" class="flex flex-wrap items-center gap-3">
             <div class="flex-1 min-w-[200px] relative">
                 <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
                 <input type="text" name="q" value="{{ request('q') }}" placeholder="Cari menu..." autocomplete="off"
                     class="w-full pl-10 pr-4 py-2 rounded-lg border-gray-200 text-sm shadow-sm focus:ring-indigo-500 focus:border-indigo-500">
             </div>
+            <select name="category" onchange="this.form.submit()" class="rounded-lg border-gray-200 text-sm shadow-sm focus:ring-indigo-500 focus:border-indigo-500 bg-white py-2">
+                <option value="">Semua Kategori</option>
+                @foreach(['Minuman', 'Menu Utama', 'Ayam Saus', 'Bebek Saus', 'Sayur', 'Cumi', 'Nasi', 'Udang'] as $cat)
+                    <option value="{{ $cat }}" {{ request('category') === $cat ? 'selected' : '' }}>{{ $cat }}</option>
+                @endforeach
+            </select>
             <label class="inline-flex items-center gap-2 px-3 py-2 rounded-lg bg-gray-50 border border-gray-200 cursor-pointer hover:bg-gray-100 transition">
                 <input id="only-available-checkbox" type="checkbox" name="only_available" value="1" class="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500" {{ request('only_available') ? 'checked' : '' }}>
                 <span class="text-sm font-medium text-gray-600">Tersedia saja</span>
@@ -57,8 +63,7 @@
 
 <script>
     function toggleAvail(productId, btn) {
-        var routePrefix = @json($routePrefix);
-        var url = '/' + routePrefix + '/products/' + productId + '/toggle-availability';
+        var url = '/products/' + productId + '/toggle-availability';
         btn.disabled = true;
         btn.style.opacity = '0.5';
         fetch(url, {
@@ -124,7 +129,7 @@
 </script>
 
 @push('modals')
-<a href="{{ route($routePrefix . '.products.create') }}" aria-label="Tambah Menu"
+<a href="{{ route('products.create') }}" aria-label="Tambah Menu"
    id="fab-btn"
    class="group fixed z-[9999] right-5 bottom-5 bg-indigo-600 hover:bg-indigo-700 text-white h-14 rounded-full shadow-2xl flex items-center justify-center overflow-hidden transition-all duration-300 w-14 hover:w-48 hover:px-5"
    style="position:fixed!important;">

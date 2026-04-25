@@ -33,7 +33,7 @@
                 </div>
             @endif
 
-            <form action="{{ route('admin.roles.update', $role->id) }}" method="POST" class="space-y-5">
+            <form action="{{ route('roles.update', $role->id) }}" method="POST" class="space-y-5">
                 @csrf
                 @method('PUT')
 
@@ -56,7 +56,7 @@
                                 <label for="permission_{{ $permission->id }}" class="flex items-center gap-2 px-3 py-2.5 rounded-lg border border-gray-200 hover:border-indigo-300 hover:bg-indigo-50/30 cursor-pointer transition group has-[:checked]:border-indigo-400 has-[:checked]:bg-indigo-50">
                                     <input class="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500" type="checkbox" name="permissions[]" value="{{ $permission->name }}"
                                         id="permission_{{ $permission->id }}"
-                                        {{ in_array($permission->id, old('permissions', $rolePermissions)) ? 'checked' : '' }}>
+                                        {{ in_array($permission->name, old('permissions', $rolePermissions)) ? 'checked' : '' }}>
                                     <span class="text-sm text-gray-600 group-hover:text-gray-900 transition">{{ $permission->name }}</span>
                                 </label>
                             @endforeach
@@ -71,7 +71,7 @@
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
                         Update
                     </button>
-                    <a href="{{ route('admin.roles.index') }}" class="inline-flex items-center px-5 py-2.5 bg-white border border-gray-200 hover:bg-gray-50 text-gray-600 text-sm font-medium rounded-lg transition">Batal</a>
+                    <a href="{{ route('roles.index') }}" class="inline-flex items-center px-5 py-2.5 bg-white border border-gray-200 hover:bg-gray-50 text-gray-600 text-sm font-medium rounded-lg transition">Batal</a>
                 </div>
             </form>
         </div>

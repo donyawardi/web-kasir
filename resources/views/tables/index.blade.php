@@ -35,13 +35,13 @@
                         @endif
                     </td>
                     <td class="px-6 py-4 whitespace-nowrap">
-                        <form action="{{ route('admin.tables.regenerate_qr', $table->id) }}" method="POST" class="inline-block mr-3">
+                        <form action="{{ route('tables.regenerate_qr', $table->id) }}" method="POST" class="inline-block mr-3">
                             @csrf
                             <button type="button" class="text-blue-600 hover:underline regenerate-qr-btn" data-table-id="{{ $table->id }}" data-table-number="{{ $table->table_number }}">Regenerate QR</button>
                         </form>
-                        <a href="{{ route('admin.tables.download_qr', $table->id) }}" class="text-blue-600 hover:underline mr-3" target="_blank" rel="noopener">Download QR</a>
-                        <a href="{{ route('admin.tables.edit', $table->id) }}" class="text-yellow-600 hover:underline mr-3">Edit</a>
-                        <form action="{{ route('admin.tables.destroy', $table->id) }}" method="POST" class="inline-block" onsubmit="return confirm('Hapus meja ini?')">
+                        <a href="{{ route('tables.download_qr', $table->id) }}" class="text-blue-600 hover:underline mr-3" target="_blank" rel="noopener">Download QR</a>
+                        <a href="{{ route('tables.edit', $table->id) }}" class="text-yellow-600 hover:underline mr-3">Edit</a>
+                        <form action="{{ route('tables.destroy', $table->id) }}" method="POST" class="inline-block" onsubmit="return confirm('Hapus meja ini?')">
                              @csrf
                              @method('DELETE')
                              <button class="text-red-600">Hapus</button>
@@ -57,7 +57,7 @@
     </div>
 
     {{-- Floating action button bottom-right --}}
-    <a href="{{ route('admin.tables.create') }}" aria-label="Tambah Meja" class="fixed z-50 right-6 bottom-6 bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-3 rounded-full shadow-lg flex items-center gap-3">
+    <a href="{{ route('tables.create') }}" aria-label="Tambah Meja" class="fixed z-50 right-6 bottom-6 bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-3 rounded-full shadow-lg flex items-center gap-3">
         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
         </svg>

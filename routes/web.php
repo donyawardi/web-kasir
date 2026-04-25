@@ -1,11 +1,8 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
-use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\DB;
-use App\Http\Controllers\Admin\AdminDashboardController;
-use App\Http\Controllers\Kasir\KasirDashboardController;
-use App\Http\Controllers\KasirOrderController;
+use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\Panel\OrderController as PanelOrderController;
 use App\Http\Controllers\TableController;
 use App\Http\Controllers\OrderController;
 use App\Http\Controllers\PaymentController;
@@ -14,86 +11,59 @@ use App\Http\Controllers\TransactionController;
 use App\Http\Controllers\Admin\ReportController;
 use App\Http\Controllers\Admin\RoleController;
 use App\Http\Controllers\Admin\UserController;
-use App\Http\Controllers\Kasir\KasirReportController;
+use Spatie\Permission\Middleware\RoleMiddleware;
 
+// ─────────────────────────────────────────────
 // Halaman utama
-Route::get('/', function () {
-    return view('welcome');
-});
+// ─────────────────────────────────────────────
+Route::get('/', fn() => view('welcome'));
 
-// Route "dashboard" compatibility: redirect setelah login berdasarkan role
-Route::middleware(['auth'])->get('/dashboard', function () {
-    $user = Auth::user();
+// ─────────────────────────────────────────────
+// PANEL (Admin + Kasir)
+// ─────────────────────────────────────────────
+Route::middleware(['auth', RoleMiddleware::using('admin|kasir')])->group(function () {
 
-    if (! $user) {
-        return redirect()->route('login');
-    }
+    // Dashboard
+    Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
+    Route::get('/api/check-orders', [DashboardController::class, 'checkNewOrders'])->name('api.check-orders');
 
-    $roleQuery = DB::table('model_has_roles')
-        ->join('roles', 'model_has_roles.role_id', '=', 'roles.id')
-        ->where('model_has_roles.model_id', $user->id)
-        ->where('model_has_roles.model_type', get_class($user));
+    // Produk
+    Route::resource('products', ProductController::class);
+    Route::patch('products/{product}/toggle-availability', [ProductController::class, 'toggleAvailability'])->name('products.toggle-availability');
 
-    if ((clone $roleQuery)->where('roles.name', 'admin')->exists()) {
-        return redirect()->route('admin.dashboard');
-    }
+    // Meja
+    Route::resource('tables', TableController::class);
+    Route::post('tables/{table}/regenerate-qr', [TableController::class, 'regenerateQr'])->name('tables.regenerate_qr');
+    Route::get('tables/{table}/download-qr', [TableController::class, 'downloadQr'])->name('tables.download_qr');
+    Route::post('tables/regenerate-all', [TableController::class, 'regenerateAll'])->name('tables.regenerate_all');
 
-    if ((clone $roleQuery)->where('roles.name', 'kasir')->exists()) {
-        return redirect()->route('kasir.dashboard');
-    }
+    // Pesanan
+    Route::resource('orders', PanelOrderController::class)->only(['index', 'create', 'store', 'show']);
+    Route::post('orders/{order}/process-payment', [PanelOrderController::class, 'processPayment'])->name('orders.process-payment');
+    Route::patch('orders/{order}/update-status', [PanelOrderController::class, 'updateStatus'])->name('orders.update-status');
+    Route::get('orders/{order}/receipt', [PanelOrderController::class, 'receipt'])->name('orders.receipt');
 
-    // fallback
-    return redirect('/');
-})->name('dashboard');
+    // Transaksi
+    Route::resource('transactions', TransactionController::class);
 
-// Rute untuk admin
-Route::middleware(['auth'])->group(function () {
+    // Payment panel
+    Route::get('payment/{order}/detail', [PaymentController::class, 'show'])->name('payment.show');
+    Route::put('payment/{order}', [PaymentController::class, 'complete'])->name('payment.complete');
 
-    // Hanya admin yang bisa akses dashboard & manajemen
-    Route::prefix('admin')->name('admin.')->middleware(\Spatie\Permission\Middleware\RoleMiddleware::using('admin'))->group(function () {
-        Route::get('/dashboard', [AdminDashboardController::class, 'index'])->name('dashboard');
-        Route::resource('tables', TableController::class);
-        // Regenerate QR code for a specific table
-        Route::post('tables/{table}/regenerate-qr', [TableController::class, 'regenerateQr'])->name('tables.regenerate_qr');
-        // Download QR for a table
-        Route::get('tables/{table}/download-qr', [TableController::class, 'downloadQr'])->name('tables.download_qr');
-        // Bulk regenerate all table QR codes
-        Route::post('tables/regenerate-all', [TableController::class, 'regenerateAll'])->name('tables.regenerate_all');
-        Route::resource('products', ProductController::class);
-        Route::patch('products/{product}/toggle-availability', [ProductController::class, 'toggleAvailability'])->name('products.toggle-availability');
-        Route::get('/reports', [ReportController::class, 'index'])->name('reports.index');
-        Route::get('/reports/export', [ReportController::class, 'export'])->name('reports.export');
+    // ── Admin only ──────────────────────────────────────────────────
+    Route::middleware(RoleMiddleware::using('admin'))->group(function () {
         Route::resource('users', UserController::class)->except(['show']);
         Route::resource('roles', RoleController::class)->except(['show']);
-        Route::resource('orders', \App\Http\Controllers\Admin\OrderController::class)->only(['index', 'create', 'store', 'show']);
-        Route::patch('orders/{order}/update-status', [\App\Http\Controllers\Admin\OrderController::class, 'updateStatus'])->name('orders.update-status');
+        Route::get('reports', [ReportController::class, 'index'])->name('reports.index');
+        Route::get('reports/export', [ReportController::class, 'export'])->name('reports.export');
+        Route::post('store/toggle', [DashboardController::class, 'toggleStore'])->name('store.toggle');
+        Route::post('store/hours', [DashboardController::class, 'updateStoreHours'])->name('store.hours');
     });
-
-    // Admin: full CRUD transaksi
-    Route::middleware(\Spatie\Permission\Middleware\RoleMiddleware::using('admin'))->group(function () {
-        Route::resource('transactions', TransactionController::class);
-    });
-
-    // Rute untuk kasir (panel kasir) — inside auth group
-    Route::prefix('kasir')->name('kasir.')->middleware(\Spatie\Permission\Middleware\RoleMiddleware::using('kasir'))->group(function () {
-        Route::get('/dashboard', [KasirDashboardController::class, 'index'])->name('dashboard');
-        Route::get('/api/check-orders', [KasirDashboardController::class, 'checkNewOrders'])->name('api.check-orders');
-        Route::resource('orders', KasirOrderController::class)->except(['edit', 'update', 'destroy']);
-        Route::post('orders/{order}/process-payment', [KasirOrderController::class, 'processPayment'])->name('orders.process-payment');
-        Route::resource('products', ProductController::class);
-        Route::patch('products/{product}/toggle-availability', [ProductController::class, 'toggleAvailability'])->name('products.toggle-availability');
-        Route::get('reports', [KasirReportController::class, 'index'])->name('reports.index');
-        Route::get('reports/export', [KasirReportController::class, 'export'])->name('reports.export');
-    });
-
-    // Order management routes (admin/kasir authenticated)
-    Route::get('/orders/{order}/receipt', [OrderController::class, 'receipt'])->name('orders.receipt');
-    Route::patch('/orders/{order}/update-status', [OrderController::class, 'updateStatus'])->name('orders.update-status');
-    Route::get('/payment/{order}/detail', [PaymentController::class, 'show'])->name('payment.show');
-    Route::put('/payment/{order}', [PaymentController::class, 'complete'])->name('payment.complete');
 });
 
-// Rute pelanggan (public - read only + order creation)
+// ─────────────────────────────────────────────
+// CUSTOMER (public, no auth required)
+// ─────────────────────────────────────────────
 Route::get('/order/{table}', [OrderController::class, 'orderPage'])->name('order.show');
 Route::post('/order', [OrderController::class, 'storeOrder'])->name('order.store');
 Route::get('/order-status/{order}', [OrderController::class, 'trackOrder'])->name('order.track');
@@ -101,3 +71,4 @@ Route::get('/api/order-status/{order}', [OrderController::class, 'orderStatus'])
 Route::get('/payment/{order_id}', [PaymentController::class, 'paymentPage'])->name('payment.page');
 Route::post('/payment/{order}/cash', [PaymentController::class, 'chooseCash'])->name('payment.choose-cash');
 Route::get('/tables/{table}/qr', [TableController::class, 'showQrCode'])->name('tables.qr');
+

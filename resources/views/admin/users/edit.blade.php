@@ -16,7 +16,7 @@
                     </div>
                 @endif
 
-                <form action="{{ route('admin.users.update', $user) }}" method="POST" class="space-y-5">
+                <form action="{{ route('users.update', $user) }}" method="POST" class="space-y-5">
                     @csrf
                     @method('PUT')
 
@@ -55,7 +55,7 @@
 
                     <div class="flex items-center gap-3">
                         <button type="submit" class="inline-flex items-center px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium rounded shadow">Simpan</button>
-                        <a href="{{ route('admin.users.index') }}" class="inline-flex items-center px-4 py-2 bg-white border border-gray-300 hover:bg-gray-50 text-gray-700 text-sm font-medium rounded shadow">Batal</a>
+                        <a href="{{ route('users.index') }}" class="inline-flex items-center px-4 py-2 bg-white border border-gray-300 hover:bg-gray-50 text-gray-700 text-sm font-medium rounded shadow">Batal</a>
                     </div>
                 </form>
             </div>

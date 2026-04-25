@@ -9,19 +9,14 @@ use Illuminate\Support\Facades\Storage;
 
 class ProductController extends Controller
 {
-    private function routePrefix()
-    {
-        return str_contains(request()->route()->getName(), 'kasir.') ? 'kasir' : 'admin';
-    }
-
     /**
      * Display a listing of the resource.
      */
     public function index(Request $request)
     {
-        $routePrefix = $this->routePrefix();
         $q = $request->get('q');
         $onlyAvailable = $request->boolean('only_available');
+        $category = $request->get('category');
 
         $products = Product::when($q, function ($query, $q) {
             $query->where('name', 'like', '%' . $q . '%')
@@ -30,15 +25,18 @@ class ProductController extends Controller
         ->when($onlyAvailable, function ($query) {
             $query->where('available', true);
         })
+        ->when($category, function ($query) use ($category) {
+            $query->where('category', $category);
+        })
         ->orderBy('name')
         ->paginate(10)
         ->withQueryString();
 
         // If AJAX request (live search), return rendered rows and pagination as JSON
         if ($request->ajax()) {
-            $rows = view('products._table_rows', compact('products', 'routePrefix'))->render();
+            $rows = view('products._table_rows', compact('products'))->render();
             $pagination = view('products._pagination', compact('products'))->render();
-            $mobile = view('products._mobile_cards', compact('products', 'routePrefix'))->render();
+            $mobile = view('products._mobile_cards', compact('products'))->render();
             return response()->json([
                 'rows' => $rows,
                 'pagination' => $pagination,
@@ -46,7 +44,7 @@ class ProductController extends Controller
             ]);
         }
 
-        return view('products.index', compact('products', 'routePrefix'));
+            return view('products.index', compact('products'));
     }
 
     /**
@@ -54,8 +52,7 @@ class ProductController extends Controller
      */
     public function create()
     {
-        $routePrefix = $this->routePrefix();
-        return view('products.create', compact('routePrefix'));
+        return view('products.create');
     }
 
     /**
@@ -64,11 +61,12 @@ class ProductController extends Controller
     public function store(Request $request)
     {
         $data = $request->validate([
-            'name' => 'required|string|max:255',
-            'price' => 'required|numeric|min:0',
+            'name'        => 'required|string|max:255',
+            'category'    => 'nullable|string|max:100',
+            'price'       => 'required|numeric|min:0',
             'description' => 'nullable|string',
-            'available' => 'nullable|boolean',
-            'image' => 'nullable|image|mimes:jpg,jpeg,png,webp|max:2048',
+            'available'   => 'nullable|boolean',
+            'image'       => 'nullable|image|mimes:jpg,jpeg,png,webp|max:2048',
         ]);
 
         // use boolean() so unchecked checkbox (missing param) is treated as false
@@ -79,7 +77,7 @@ class ProductController extends Controller
         }
 
         Product::create($data);
-        return redirect()->route($this->routePrefix() . '.products.index')->with('success', 'Produk berhasil ditambahkan.');
+        return redirect()->route('products.index')->with('success', 'Produk berhasil ditambahkan.');
     }
 
     /**
@@ -87,8 +85,7 @@ class ProductController extends Controller
      */
     public function show(Product $product)
     {
-        $routePrefix = $this->routePrefix();
-        return view('products.show', compact('product', 'routePrefix'));
+        return view('products.show', compact('product'));
     }
 
     /**
@@ -96,8 +93,7 @@ class ProductController extends Controller
      */
     public function edit(Product $product)
     {
-        $routePrefix = $this->routePrefix();
-        return view('products.edit', compact('product', 'routePrefix'));
+        return view('products.edit', compact('product'));
     }
 
     /**
@@ -106,11 +102,12 @@ class ProductController extends Controller
     public function update(Request $request, Product $product)
     {
         $data = $request->validate([
-            'name' => 'required|string|max:255',
-            'price' => 'required|numeric|min:0',
+            'name'        => 'required|string|max:255',
+            'category'    => 'nullable|string|max:100',
+            'price'       => 'required|numeric|min:0',
             'description' => 'nullable|string',
-            'available' => 'nullable|boolean',
-            'image' => 'nullable|image|mimes:jpg,jpeg,png,webp|max:2048',
+            'available'   => 'nullable|boolean',
+            'image'       => 'nullable|image|mimes:jpg,jpeg,png,webp|max:2048',
         ]);
 
         // use boolean() so unchecked checkbox sets available to false
@@ -124,7 +121,7 @@ class ProductController extends Controller
         }
 
         $product->update($data);
-        return redirect()->route($this->routePrefix() . '.products.index')->with('success', "Produk '" . $product->name . "' berhasil diperbarui.");
+        return redirect()->route('products.index')->with('success', "Produk '" . $product->name . "' berhasil diperbarui.");
     }
 
     /**
@@ -133,7 +130,7 @@ class ProductController extends Controller
     public function destroy(Product $product)
     {
         $product->delete();
-        return redirect()->route($this->routePrefix() . '.products.index')->with('success', 'Produk berhasil dihapus.');
+        return redirect()->route('products.index')->with('success', 'Produk berhasil dihapus.');
     }
 
     /**

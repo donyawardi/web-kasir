@@ -3,123 +3,247 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title></title>
-    @php
-        $w = 32; // karakter per baris untuk 58mm
-
-        function rl($left, $right, $width = 32) {
-            $pad = max(1, $width - mb_strlen($left) - mb_strlen($right));
-            return $left . str_repeat(' ', $pad) . $right;
-        }
-
-        function rc($text, $width = 32) {
-            $pad = max(0, intval(($width - mb_strlen($text)) / 2));
-            return str_repeat(' ', $pad) . $text;
-        }
-
-        $sep = str_repeat('=', $w);
-        $sep2 = str_repeat('-', $w);
-    @endphp
+    <title>Struk Pesanan #{{ str_pad($order->id, 4, '0', STR_PAD_LEFT) }}</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: #f3f4f6;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .wrap { max-width: 340px; width: 100%; }
+
+        .receipt {
+            background: #fff;
+            border: 1px solid #e5e7eb;
+            border-radius: 12px;
+            padding: 16px 20px;
+        }
+
+        .receipt-logo {
+            display: flex;
+            justify-content: center;
+            padding: 10px 0 6px;
+        }
+        .receipt-logo img {
+            width: 80px;
+            height: 80px;
+            object-fit: contain;
+            /* hapus latar hitam PNG saat di atas kertas putih */
+            mix-blend-mode: multiply;
+            display: block;
+        }
+
+        .receipt pre {
             font-family: 'Courier New', Courier, monospace;
             font-size: 12px;
-            line-height: 1.4;
-            width: 48mm;
-            margin: 0 auto;
-            padding: 2mm 0;
+            line-height: 1.6;
+            white-space: pre;
             color: #000;
         }
-        pre {
-            font-family: 'Courier New', Courier, monospace;
+
+        .toggle-row {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-top: 14px;
+            font-size: 13px;
+            color: #6b7280;
+        }
+        input[type=checkbox] { width: 16px; height: 16px; cursor: pointer; }
+
+        .badge {
+            display: inline-block;
+            font-size: 11px;
+            padding: 2px 8px;
+            border-radius: 100px;
+            margin-left: 4px;
+        }
+        .badge-on  { background: #dcfce7; color: #166534; }
+        .badge-off { background: #f3f4f6; color: #6b7280; }
+
+        .info {
             font-size: 12px;
-            line-height: 1.4;
-            white-space: pre;
-            margin: 0;
+            color: #6b7280;
+            margin-top: 8px;
+            padding: 8px 12px;
+            border-radius: 8px;
+            background: #f9fafb;
+            border: 1px solid #e5e7eb;
         }
-        .receipt-text { }
-        .header-text {
-            font-size: 14px;
-            font-weight: bold;
+
+        .controls { display: flex; gap: 8px; margin-top: 12px; }
+        .controls button {
+            flex: 1;
+            padding: 10px;
+            font-size: 13px;
+            font-weight: 600;
+            border-radius: 8px;
+            cursor: pointer;
+            border: 1px solid #d1d5db;
+            background: #fff;
+            color: #374151;
+            transition: background 0.15s;
         }
+        .controls button:hover { background: #f3f4f6; }
+        .btn-print {
+            background: #4f46e5 !important;
+            color: #fff !important;
+            border-color: #4f46e5 !important;
+        }
+        .btn-print:hover { background: #4338ca !important; }
+
         @media print {
-            html, body { width: 48mm; margin: 0; padding: 0; }
+            body { background: none; padding: 0; min-height: 0; display: block; }
             .no-print { display: none !important; }
-            @page { margin: 0; padding: 0; size: 48mm auto; }
-            /* Feed paper past the tear bar (~30mm) so the last line is visible */
-            pre { padding-bottom: 30mm !important; }
+            .receipt-logo { display: none !important; }
+            .receipt { border: none; border-radius: 0; padding: 0; background: #fff; }
+            pre { padding-bottom: 20mm; }
+            @page { margin: 0; size: 58mm auto; }
         }
-        .print-actions {
-            text-align: center;
-            margin-top: 15px;
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            max-width: 320px;
-            margin-left: auto;
-            margin-right: auto;
-        }
-        .print-actions .btn-row { display: flex; gap: 6px; margin-bottom: 6px; }
-        .print-actions button, .print-actions a {
-            display: inline-flex; align-items: center; justify-content: center; gap: 5px;
-            padding: 10px 16px; font-size: 13px; font-weight: 600; border-radius: 8px;
-            cursor: pointer; text-decoration: none; flex: 1; border: none; transition: background 0.15s;
-        }
-        .btn-print { background: #4f46e5; color: #fff; }
-        .btn-print:hover { background: #4338ca; }
-        .btn-back { background: #f3f4f6; color: #374151; border: 1px solid #d1d5db !important; }
-        .btn-back:hover { background: #e5e7eb; }
     </style>
 </head>
 <body>
 
-<pre class="receipt-text"><span class="header-text">{{ rc('AYAM BAKAR', $w) }}
-{{ rc('SEAFOOD 79', $w) }}</span>
-{{ $sep }}
-{{ rl('No. Pesanan', '#' . $order->id, $w) }}
-{{ rl('Meja', $order->table->table_number ?? '-', $w) }}
-@if($order->is_takeaway)
-{{ rl('Tipe', 'TAKE AWAY', $w) }}
-@endif
-{{ rl('Tanggal', $order->created_at->format('d/m/Y H:i'), $w) }}
-@if($payment)
-{{ rl('Bayar', strtoupper($payment->payment_method), $w) }}
-{{ rl('Status', $payment->status === 'success' ? 'LUNAS' : 'BELUM BAYAR', $w) }}
-@endif
-{{ $sep }}
-@foreach($order->orderItems as $item)
-{{ mb_substr($item->product->name ?? '-', 0, $w) }}
-{{ rl('  ' . $item->quantity . 'x ' . number_format($item->price, 0, ',', '.'), number_format($item->quantity * $item->price, 0, ',', '.'), $w) }}
-@endforeach
-{{ $sep }}
-{{ rl('Jumlah Item', $order->orderItems->sum('quantity') . ' pcs', $w) }}
-<b>{{ rl('TOTAL', 'Rp' . number_format($order->total_price, 0, ',', '.'), $w) }}</b>
-@if($payment && $payment->payment_method === 'cash' && $cashReceived)
-{{ $sep2 }}
-{{ rl('Tunai', 'Rp' . number_format($cashReceived, 0, ',', '.'), $w) }}
-{{ rl('Kembalian', 'Rp' . number_format($cashReceived - $order->total_price, 0, ',', '.'), $w) }}
-@endif
-{{ $sep }}
-{{ rc('Terima kasih!', $w) }}
-{{ $sep }}
-</pre>
+<div class="wrap">
+    @php
+        $W = 32;
 
-    <div class="print-actions no-print">
-        <div class="btn-row">
-            <button class="btn-print" onclick="window.print()">🖨️ Cetak Struk</button>
-            <a class="btn-back" href="{{ url()->previous() }}">← Kembali</a>
+        $rl = function(string $left, string $right) use ($W): string {
+            $pad = max(1, $W - mb_strlen($left) - mb_strlen($right));
+            return $left . str_repeat(' ', $pad) . $right;
+        };
+
+        $rc = function(string $text) use ($W): string {
+            $pad = max(0, (int) floor(($W - mb_strlen($text)) / 2));
+            return str_repeat(' ', $pad) . $text;
+        };
+
+        $sep  = str_repeat('=', $W);
+        $sep2 = str_repeat('-', $W);
+
+        $paymentLabel = match($payment?->payment_method) {
+            'cash'             => 'TUNAI',
+            'qris'             => 'QRIS',
+            'later','cashier'  => 'BAYAR DI KASIR',
+            default            => strtoupper($payment?->payment_method ?? '-'),
+        };
+
+        $statusLabel = match(true) {
+            in_array($payment?->status, ['paid', 'success', 'settlement']) => 'LUNAS',
+            $payment?->status === 'pending' => 'PENDING',
+            default => strtoupper($payment?->status ?? 'PENDING'),
+        };
+
+        $tipeLabel = $order->is_takeaway ? 'BAWA PULANG' : 'DINE IN';
+        $totalQty  = $order->orderItems->sum('quantity');
+
+        $lines   = [];
+        $lines[] = $rc('AYAM BAKAR');
+        $lines[] = $rc('SEAFOOD 79');
+        $lines[] = $sep;
+        $lines[] = $rl('No. Pesanan', '#' . str_pad($order->id, 4, '0', STR_PAD_LEFT));
+        if (!$order->is_takeaway) {
+            $lines[] = $rl('Meja', $order->table->table_number ?? '-');
+        }
+        $lines[] = $rl('Tipe', $tipeLabel);
+        $lines[] = $rl('Tanggal', $order->created_at->format('d/m/Y H:i'));
+        $lines[] = $rl('Bayar', $paymentLabel);
+        $lines[] = $rl('Status', $statusLabel);
+        $lines[] = $sep;
+        foreach ($order->orderItems as $item) {
+            $lines[] = $item->product->name ?? 'Produk';
+            $lines[] = $rl(
+                '  ' . $item->quantity . 'x Rp' . number_format($item->price, 0, ',', '.'),
+                number_format($item->subtotal, 0, ',', '.'),
+            );
+        }
+        $lines[] = $sep;
+        $lines[] = $rl('Jumlah Item', $totalQty . ' pcs');
+        $lines[] = $rl('TOTAL', 'Rp' . number_format($order->total_price, 0, ',', '.'));
+        if ($payment?->payment_method === 'cash' && $cashReceived) {
+            $change  = (float) $cashReceived - (float) $order->total_price;
+            $lines[] = $sep2;
+            $lines[] = $rl('Tunai', 'Rp' . number_format($cashReceived, 0, ',', '.'));
+            $lines[] = $rl('Kembalian', 'Rp' . number_format(max(0, $change), 0, ',', '.'));
+        }
+        $lines[] = $sep;
+        $lines[] = $rc('Terima kasih!');
+        $lines[] = $sep;
+    @endphp
+
+    <div class="receipt">
+        <div class="receipt-logo">
+            <img src="{{ asset('images/logo.png') }}" alt="Ayam Bakar Seafood 79">
         </div>
+        <pre id="receipt-content">{{ implode("\n", $lines) }}</pre>
     </div>
 
-    <script>
-    // Setelah cetak selesai, beritahu halaman pembuka
-    window.onafterprint = function() {
-        if (window.opener) {
-            window.opener.postMessage('receipt-printed', '*');
+    <div class="toggle-row no-print">
+        <input type="checkbox" id="autoprint-toggle">
+        <label for="autoprint-toggle">
+            Auto print aktif
+            <span class="badge badge-off" id="auto-badge">OFF</span>
+        </label>
+    </div>
+
+    <div class="info no-print" id="info-text">
+        Auto print <b>nonaktif</b> — klik tombol cetak manual di bawah.
+    </div>
+
+    <div class="controls no-print">
+        <button class="btn-print" id="btn-cetak">🖨️ Cetak Struk</button>
+        <button id="btn-reload">↺ Reload Halaman</button>
+    </div>
+</div>
+
+<script>
+    const STORAGE_KEY = 'receipt_autoprint';
+    const toggle = document.getElementById('autoprint-toggle');
+    const badge  = document.getElementById('auto-badge');
+    const info   = document.getElementById('info-text');
+
+    function applyState(enabled) {
+        toggle.checked = enabled;
+        localStorage.setItem(STORAGE_KEY, enabled ? '1' : '0');
+        if (enabled) {
+            badge.textContent = 'ON';
+            badge.className   = 'badge badge-on';
+            info.innerHTML    = 'Auto print <b>aktif</b> — struk akan otomatis tercetak saat halaman dibuka.';
+        } else {
+            badge.textContent = 'OFF';
+            badge.className   = 'badge badge-off';
+            info.innerHTML    = 'Auto print <b>nonaktif</b> — klik tombol cetak manual di bawah.';
         }
-    };
-    @if(request('autoprint'))
-    window.onload = function() { window.print(); };
-    @endif
-    </script>
+    }
+
+    // Baca preferensi tersimpan dari localStorage
+    applyState(localStorage.getItem(STORAGE_KEY) === '1');
+
+    toggle.addEventListener('change', function () {
+        applyState(this.checked);
+    });
+
+    document.getElementById('btn-cetak').addEventListener('click', function () {
+        window.print();
+    });
+
+    document.getElementById('btn-reload').addEventListener('click', function () {
+        window.location.reload();
+    });
+
+    // Auto print setelah seluruh halaman + gambar selesai dimuat
+    window.addEventListener('load', function () {
+        if (localStorage.getItem(STORAGE_KEY) === '1') {
+            setTimeout(() => window.print(), 400);
+        }
+    });
+</script>
+
 </body>
 </html>

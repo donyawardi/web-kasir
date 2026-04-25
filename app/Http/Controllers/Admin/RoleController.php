@@ -11,7 +11,7 @@ class RoleController extends Controller
 {
     public function index()
     {
-        $roles = Role::withCount('permissions')->orderBy('name')->get();
+        $roles = Role::with('permissions')->withCount('permissions')->orderBy('name')->get();
         return view('roles.index', compact('roles'));
     }
 
@@ -35,13 +35,13 @@ class RoleController extends Controller
             $role->syncPermissions($request->permissions);
         }
 
-        return redirect()->route('admin.roles.index')->with('success', 'Role berhasil ditambahkan.');
+        return redirect()->route('roles.index')->with('success', 'Role berhasil ditambahkan.');
     }
 
     public function edit(Role $role)
     {
         $permissions = Permission::orderBy('name')->get();
-        $rolePermissions = $role->permissions->pluck('id')->toArray();
+        $rolePermissions = $role->permissions->pluck('name')->toArray();
         return view('roles.edit', compact('role', 'permissions', 'rolePermissions'));
     }
 
@@ -56,16 +56,16 @@ class RoleController extends Controller
         $role->update(['name' => $request->name]);
         $role->syncPermissions($request->permissions ?? []);
 
-        return redirect()->route('admin.roles.index')->with('success', 'Role berhasil diperbarui.');
+        return redirect()->route('roles.index')->with('success', 'Role berhasil diperbarui.');
     }
 
     public function destroy(Role $role)
     {
         if ($role->users()->count() > 0) {
-            return redirect()->route('admin.roles.index')->with('error', 'Role tidak bisa dihapus karena masih digunakan.');
+            return redirect()->route('roles.index')->with('error', 'Role tidak bisa dihapus karena masih digunakan.');
         }
 
         $role->delete();
-        return redirect()->route('admin.roles.index')->with('success', 'Role berhasil dihapus.');
+        return redirect()->route('roles.index')->with('success', 'Role berhasil dihapus.');
     }
 }

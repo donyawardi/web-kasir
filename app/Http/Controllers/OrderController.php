@@ -7,6 +7,7 @@ use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\Payment;
 use App\Models\Product;
+use App\Models\StoreSetting;
 use App\Models\Table;
 use App\Models\Transaction;
 
@@ -14,6 +15,13 @@ class OrderController extends Controller
 {
     public function storeOrder(Request $request)
     {
+        if (!StoreSetting::isCurrentlyOpen()) {
+            return response()->json([
+                'message'      => StoreSetting::get('closed_note', 'Toko sedang tutup. Silahkan datang kembali sesuai jam operasional kami.'),
+                'store_closed' => true,
+            ], 403);
+        }
+
         $request->validate([
             'table_id' => 'required|exists:tables,id',
             'items' => 'required|array|min:1',
@@ -54,7 +62,16 @@ class OrderController extends Controller
 
             // Mark table as occupied
             Table::where('id', $order->table_id)->update(['status' => 'occupied']);
-    
+
+            // Buat payment record
+            $reqMethod   = $request->input('payment_method', 'cashier');
+            $dbMethod    = ($reqMethod === 'qr') ? 'qris' : 'later';
+            Payment::create([
+                'order_id'       => $order->id,
+                'status'         => 'pending',
+                'payment_method' => $dbMethod,
+            ]);
+
             return response()->json([
                 'message' => 'Berhasil dipesan!',
                 'order_id' => $order->id,
@@ -129,7 +146,7 @@ class OrderController extends Controller
      */
     public function trackOrder($orderId)
     {
-        $order = Order::with(['orderItems.product', 'table'])->findOrFail($orderId);
+        $order = Order::with(['orderItems.product', 'table', 'payment'])->findOrFail($orderId);
         return view('orders.tracking', compact('order'));
     }
 
@@ -147,10 +164,14 @@ class OrderController extends Controller
 
     public function orderPage($tableId)
     {
-        $table = Table::findOrFail($tableId);
-        $products = Product::orderByDesc('available')->orderBy('name')->get();
-    
-        return view('orders.order', compact('table', 'products'));
+        $table      = Table::findOrFail($tableId);
+        $products   = Product::orderByDesc('available')->orderBy('name')->get();
+        $storeOpen  = StoreSetting::isCurrentlyOpen();
+        $closedNote = StoreSetting::get('closed_note', 'Toko sedang tutup. Silahkan datang kembali sesuai jam operasional kami.');
+        $openTime   = StoreSetting::get('open_time', '08:00');
+        $closeTime  = StoreSetting::get('close_time', '22:00');
+
+        return view('orders.order', compact('table', 'products', 'storeOpen', 'closedNote', 'openTime', 'closeTime'));
     }
 
 }

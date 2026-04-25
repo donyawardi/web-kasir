@@ -33,7 +33,7 @@
                 </div>
             @endif
 
-            <form action="{{ route('admin.tables.store') }}" method="POST">
+            <form action="{{ route('tables.store') }}" method="POST">
                 @csrf
 
                 <div class="mb-4">
@@ -61,7 +61,7 @@
 
                 <div class="flex items-center gap-3">
                     <button type="submit" class="inline-flex items-center px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">Simpan</button>
-                    <a href="{{ route('admin.tables.index') }}" class="inline-flex items-center px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 text-sm font-medium rounded-md">Kembali</a>
+                    <a href="{{ route('tables.index') }}" class="inline-flex items-center px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 text-sm font-medium rounded-md">Kembali</a>
                 </div>
             </form>
         </div>

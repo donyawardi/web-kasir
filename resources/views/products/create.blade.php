@@ -33,12 +33,12 @@
                 </div>
             @endif
 
-            <form action="{{ route($routePrefix . '.products.store') }}" method="POST" enctype="multipart/form-data" class="space-y-5">
+            <form action="{{ route('products.store') }}" method="POST" enctype="multipart/form-data" class="space-y-5">
                 @csrf
 
                 <div>
                     <label for="name" class="block text-sm font-semibold text-gray-700 mb-1.5">Nama Menu</label>
-                    <input type="text" name="name" id="name" value="{{ old('name') }}" placeholder="cth. Nasi Goreng Spesial"
+                    <input type="text" name="name" id="name" value="{{ old('name') }}" placeholder="Contoh. Nasi Goreng Spesial"
                         @class([
                             'block w-full rounded-lg shadow-sm text-sm focus:ring-indigo-500 focus:border-indigo-500',
                             'border-red-300 bg-red-50' => $errors->has('name'),
@@ -46,6 +46,22 @@
                         ])
                         required>
                     @error('name')<p class="mt-1.5 text-xs text-red-600">{{ $message }}</p>@enderror
+                </div>
+
+                <div>
+                    <label for="category" class="block text-sm font-semibold text-gray-700 mb-1.5">Kategori <span class="font-normal text-gray-400">(opsional)</span></label>
+                    <select name="category" id="category"
+                        @class([
+                            'block w-full rounded-lg shadow-sm text-sm focus:ring-indigo-500 focus:border-indigo-500 bg-white',
+                            'border-red-300 bg-red-50' => $errors->has('category'),
+                            'border-gray-200' => !$errors->has('category')
+                        ])>
+                        <option value="">-- Pilih Kategori --</option>
+                        @foreach(['Minuman', 'Menu Utama', 'Ayam Saus', 'Bebek Saus', 'Sayur', 'Cumi', 'Nasi', 'Udang'] as $cat)
+                            <option value="{{ $cat }}" {{ old('category') === $cat ? 'selected' : '' }}>{{ $cat }}</option>
+                        @endforeach
+                    </select>
+                    @error('category')<p class="mt-1.5 text-xs text-red-600">{{ $message }}</p>@enderror
                 </div>
 
                 <div>
@@ -100,7 +116,7 @@
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
                         Simpan
                     </button>
-                    <a href="{{ route($routePrefix . '.products.index') }}" class="inline-flex items-center px-5 py-2.5 bg-white border border-gray-200 hover:bg-gray-50 text-gray-600 text-sm font-medium rounded-lg transition">Batal</a>
+                    <a href="{{ route('products.index') }}" class="inline-flex items-center px-5 py-2.5 bg-white border border-gray-200 hover:bg-gray-50 text-gray-600 text-sm font-medium rounded-lg transition">Batal</a>
                 </div>
             </form>
         </div>

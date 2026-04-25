@@ -13,6 +13,9 @@
                     <div class="min-w-0">
                         <h3 class="text-sm font-semibold text-gray-900 truncate">{{ $product->name }}</h3>
                         <p class="text-sm font-bold text-indigo-600 mt-0.5">Rp{{ number_format($product->price, 0, ',', '.') }}</p>
+                        @if(!empty($product->category))
+                            <span class="inline-block mt-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-indigo-50 text-indigo-600">{{ $product->category }}</span>
+                        @endif
                     </div>
                     <button type="button" onclick="toggleAvail({{ $product->id }}, this)"
                         class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold cursor-pointer transition-all flex-shrink-0 {{ $product->available ? 'bg-emerald-100 text-emerald-700 hover:bg-emerald-200' : 'bg-red-100 text-red-700 hover:bg-red-200' }}"
@@ -32,15 +35,15 @@
             </div>
         </div>
         <div class="flex border-t border-gray-100 divide-x divide-gray-100">
-            <a href="{{ route($routePrefix . '.products.show', $product) }}" class="flex-1 flex items-center justify-center gap-1.5 py-2.5 text-xs font-medium text-gray-500 hover:text-indigo-600 hover:bg-indigo-50/50 transition">
+            <a href="{{ route('products.show', $product) }}" class="flex-1 flex items-center justify-center gap-1.5 py-2.5 text-xs font-medium text-gray-500 hover:text-indigo-600 hover:bg-indigo-50/50 transition">
                 <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
                 Lihat
             </a>
-            <a href="{{ route($routePrefix . '.products.edit', $product) }}" class="flex-1 flex items-center justify-center gap-1.5 py-2.5 text-xs font-medium text-gray-500 hover:text-amber-600 hover:bg-amber-50/50 transition">
+            <a href="{{ route('products.edit', $product) }}" class="flex-1 flex items-center justify-center gap-1.5 py-2.5 text-xs font-medium text-gray-500 hover:text-amber-600 hover:bg-amber-50/50 transition">
                 <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
                 Edit
             </a>
-            <form action="{{ route($routePrefix . '.products.destroy', $product) }}" method="POST" class="flex-1" onsubmit="return confirm('Yakin ingin menghapus?')">
+            <form action="{{ route('products.destroy', $product) }}" method="POST" class="flex-1" onsubmit="return confirm('Yakin ingin menghapus?')">
                 @csrf
                 @method('DELETE')
                 <button type="submit" class="w-full flex items-center justify-center gap-1.5 py-2.5 text-xs font-medium text-gray-500 hover:text-red-600 hover:bg-red-50/50 transition">

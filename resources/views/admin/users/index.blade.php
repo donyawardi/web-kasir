@@ -6,7 +6,7 @@
     <div class="py-6 max-w-7xl mx-auto sm:px-6 lg:px-8">
         <div class="flex items-center justify-between mb-4">
             <h3 class="text-lg font-medium text-gray-700">Daftar User</h3>
-            <a href="{{ route('admin.users.create') }}" class="inline-flex items-center px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium rounded shadow">
+            <a href="{{ route('users.create') }}" class="inline-flex items-center px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium rounded shadow">
                 + Tambah User
             </a>
         </div>
@@ -40,9 +40,9 @@
                                 <td class="px-5 py-3 text-gray-500">{{ $user->created_at->format('d M Y') }}</td>
                                 <td class="px-5 py-3">
                                     <div class="flex flex-wrap gap-2">
-                                        <a href="{{ route('admin.users.edit', $user) }}" class="text-amber-600 hover:underline">Edit</a>
+                                        <a href="{{ route('users.edit', $user) }}" class="text-amber-600 hover:underline">Edit</a>
                                         @if($user->id !== auth()->id())
-                                            <form action="{{ route('admin.users.destroy', $user) }}" method="POST" onsubmit="return confirm('Yakin ingin menghapus user ini?')">
+                                            <form action="{{ route('users.destroy', $user) }}" method="POST" onsubmit="return confirm('Yakin ingin menghapus user ini?')">
                                                 @csrf
                                                 @method('DELETE')
                                                 <button type="submit" class="text-red-600 hover:underline">Hapus</button>
